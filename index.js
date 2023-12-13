@@ -4,10 +4,10 @@ const fs = require('fs');
 
 const token = process.env.GITHUB_TOKEN; // Use the token from the .env
 const startDate = '2023-01-01'; // Adjust the start date as needed
-const endDate = '2023-12-12'; // Replace with the current date
+const endDate = '2023-12-31'; // Replace with the current date
 const perPage = 100; // Maximum results per page
 
-let csvContent = 'Count,Repository,PR Number,Merged Date,Title,URL\n'; // CSV header
+let csvContent = 'Count,Merged Date,Repository,Title,URL,PR Number\n'; // CSV header
 let count = 0;
 
 function fetchPRs(page = 1) {
@@ -31,7 +31,7 @@ function fetchPRs(page = 1) {
             const mergedDate = new Date(pr.closed_at).toISOString().split('T')[0];
             const prUrl = pr.html_url;
 
-            csvContent += `${++count},${repoName},${prNumber},${mergedDate},"${title}",${prUrl}\n`;
+            csvContent += `${++count},${mergedDate},${repoName},"${title}",${prUrl},${prNumber}\n`;
         });
 
         const linkHeader = response.headers.link;
