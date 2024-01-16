@@ -2,12 +2,15 @@ require('dotenv').config();
 const axios = require('axios');
 const fs = require('fs');
 
-const token = process.env.GITHUB_TOKEN; // Use the token from the .env
-const startDate = '2023-01-01'; // Adjust the start date as needed
-const endDate = '2023-12-31'; // Replace with the current date
-const perPage = 100; // Maximum results per page
+const token = process.env.GITHUB_TOKEN;
+const startDate = '2023-01-01';
+const endDate = '2023-12-31';
+const perPage = 100;
 
-let csvContent = 'Count,Merged Date,Repository,Title,URL,PR Number\n'; // CSV header
+// const author = 'edfbarker';
+const author = '@me';
+
+let csvContent = 'Count,Merged Date,Repository,Title,URL\n'; 
 let count = 0;
 
 function fetchPRs(page = 1) {
@@ -16,7 +19,7 @@ function fetchPRs(page = 1) {
             'Authorization': `token ${token}`
         },
         params: {
-            q: `is:pr is:merged author:@me merged:${startDate}..${endDate}`,
+            q: `is:pr is:merged author:${author} merged:${startDate}..${endDate}`,
             sort: 'created',
             order: 'asc',
             per_page: perPage,
@@ -25,18 +28,19 @@ function fetchPRs(page = 1) {
     })
     .then(response => {
         response.data.items.forEach(pr => {
+
+            if(count ===1){console.log(pr);}
             const repoName = pr.repository_url.split('/').pop();
-            const prNumber = pr.number;
-            const title = pr.title.replace(/,/g, ''); // Remove commas from titles to maintain CSV format
-            const mergedDate = new Date(pr.closed_at).toISOString().split('T')[0];
+            const title = pr.title.replace(/,/g, '');
+            const mergedDate = new Date(pr.pull_request.merged_at).toISOString().split('T')[0];
             const prUrl = pr.html_url;
 
-            csvContent += `${++count},${mergedDate},${repoName},"${title}",${prUrl},${prNumber}\n`;
+            csvContent += `${++count},${mergedDate},${repoName},"${title}",${prUrl}\n`;
         });
 
         const linkHeader = response.headers.link;
         if (linkHeader && linkHeader.includes('rel="next"')) {
-            fetchPRs(page + 1); // Fetch the next page
+            fetchPRs(page + 1);
         } else {
             fs.writeFile('mergedPRs.csv', csvContent, (err) => {
                 if (err) {
@@ -50,4 +54,4 @@ function fetchPRs(page = 1) {
     .catch(error => console.error(error));
 }
 
-fetchPRs(); // Initial call to the function
+fetchPRs();
